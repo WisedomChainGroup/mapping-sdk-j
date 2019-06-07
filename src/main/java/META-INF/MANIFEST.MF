@@ -1,0 +1,40 @@
+Manifest-Version: 1.0
+Class-Path: spring-boot-autoconfigure-2.1.5.RELEASE.jar byte-buddy-1.9
+ .12.jar jul-to-slf4j-1.7.26.jar checker-compat-qual-2.0.0.jar json-sm
+ art-2.3.jar json-io-2.4.1.jar classmate-1.4.0.jar jna-4.5.2.jar json-
+ lib-2.2.3-jdk15.jar hamcrest-library-1.3.jar bcprov-jdk15on-1.61.jar 
+ tomcat-embed-websocket-9.0.19.jar spring-boot-starter-tomcat-2.1.5.RE
+ LEASE.jar spring-boot-2.1.5.RELEASE.jar jargon2-api-1.1.1.jar spring-
+ context-5.1.7.RELEASE.jar commons-io-2.4.jar commons-collections-3.2.
+ jar ochafik-util-0.12.jar config-1.2.1.jar jackson-module-parameter-n
+ ames-2.9.8.jar accessors-smart-1.2.jar commons-collections4-4.0.jar h
+ ibernate-validator-6.0.16.Final.jar spring-boot-starter-2.1.5.RELEASE
+ .jar jackson-core-2.9.8.jar commons-beanutils-1.7.0.jar spring-boot-s
+ tarter-web-2.0.6.RELEASE.jar spring-test-5.1.7.RELEASE.jar concurrent
+ linkedhashmap-lru-1.4.2.jar log4j-api-2.11.2.jar spring-webmvc-5.1.7.
+ RELEASE.jar spring-boot-starter-test-2.0.6.RELEASE.jar commons-math3-
+ 3.6.jar error_prone_annotations-2.1.3.jar postgresql-42.2.5.jar ezmor
+ ph-1.0.6.jar android-json-0.0.20131108.vaadin1.jar jackson-datatype-j
+ dk8-2.9.8.jar jackson-databind-2.5.1.jar hamcrest-core-1.3.jar spring
+ -aop-5.1.7.RELEASE.jar log4j-to-slf4j-2.11.2.jar jackson-annotations-
+ 2.9.0.jar jargon2-native-ri-binaries-generic-1.1.1.jar commons-codec-
+ 1.10.jar spring-expression-5.1.7.RELEASE.jar logback-core-1.2.3.jar l
+ ogback-classic-1.1.7.jar byte-buddy-agent-1.9.12.jar junit-4.12.jar j
+ son-path-2.4.0.jar jsonassert-1.5.0.jar spring-boot-test-autoconfigur
+ e-2.1.5.RELEASE.jar mockito-core-2.28.2.jar j2objc-annotations-1.1.ja
+ r javax.annotation-api-1.3.2.jar spring-jcl-5.1.7.RELEASE.jar json-si
+ mple-1.1.1.jar jsonrpc4j-1.1.jar commons-lang3-3.4.jar gson-2.8.5.jar
+  concurrent-locks-1.0.0.jar spring-boot-starter-json-2.1.5.RELEASE.ja
+ r validation-api-2.0.0.Final.jar fastjson-1.2.47.jar jargon2-native-r
+ i-backend-1.1.1.jar tomcat-embed-el-9.0.19.jar jboss-logging-3.3.2.Fi
+ nal.jar spring-web-5.1.7.RELEASE.jar slf4j-api-1.7.26.jar objenesis-2
+ .6.jar animal-sniffer-annotations-1.14.jar asm-5.0.4.jar jnaerator-ru
+ ntime-0.12.jar protobuf-java-3.6.1.jar netty-all-4.0.30.Final.jar ass
+ ertj-core-3.11.1.jar java-util-1.8.0.jar xmlunit-core-2.6.2.jar sprin
+ g-beans-5.1.7.RELEASE.jar snakeyaml-1.23.jar commons-logging-1.1.1.ja
+ r snappy-java-1.1.4.jar spring-boot-test-2.1.5.RELEASE.jar jsr305-1.3
+ .9.jar guava-24.1-jre.jar tomcat-embed-core-9.0.19.jar commons-lang-2
+ .4.jar spring-core-5.1.7.RELEASE.jar spring-boot-starter-logging-2.1.
+ 5.RELEASE.jar jackson-datatype-jsr310-2.9.8.jar
+Main-Class: com.example.wdc.WdcApplication
+
