@@ -36,6 +36,11 @@ public class SHA3Utility {
         return SHA3Utility.hash(in, digest);
     }
 
+    public static byte[] keccak256(byte[] in){
+        Digest digest = new KeccakDigest(256);
+        return SHA3Utility.hash(in, digest);
+    }
+
     public static byte[] sha3256(byte[] in){
         Digest digest = new SHA3Digest(256);
         return SHA3Utility.hash(in, digest);

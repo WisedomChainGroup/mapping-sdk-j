@@ -4,11 +4,8 @@ import com.example.wdc.keystore.crypto.*;
 import com.example.wdc.keystore.util.Utils;
 import com.google.common.primitives.Bytes;
 import com.google.gson.Gson;
-import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Hex;
-import org.json.simple.JSONArray;
 
-import java.io.*;
 import java.security.SecureRandom;
 
 
@@ -47,6 +44,7 @@ public class WdcUtil {
                     derivedKey,cipherPrivKey
                     )
             );
+            String b= Hex.encodeHexString(iv);
 
             Crypto crypto = new Crypto(
                     AESManage.cipher, Hex.encodeHexString(cipherPrivKey),

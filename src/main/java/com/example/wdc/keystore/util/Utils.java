@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.Comparator;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import static org.apache.commons.codec.binary.Hex.encodeHexString;
 
@@ -89,6 +90,11 @@ public final class Utils {
         } else {
             throw new RuntimeException("File or directory does not exist");
         }
+    }
+
+    public static boolean isInteger(String str) {
+        Pattern pattern = Pattern.compile("^[-\\+]?[\\d]*$");
+        return pattern.matcher(str).matches();
     }
 
 
