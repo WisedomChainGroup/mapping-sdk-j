@@ -9,6 +9,7 @@ import org.apache.commons.codec.binary.Hex;
 import java.security.SecureRandom;
 
 
+
 public class WdcUtil {
     public String address;
     public Crypto crypto;
@@ -26,39 +27,43 @@ public class WdcUtil {
         return gson.toJson(keystore);
     }
     public static Keystore fromPassword(String password) throws Exception{
-		
-        String address="";
-        String res;
-        try {
-            res = Hex.encodeHexString(SHA3Utility.keccak256(publicKey.getEncoded()));
-            res = res.toLowerCase().substring(res.length() - 44);
+        if (password.length()>20 || password.length()<8){
+            throw new Exception("请输入8-20位密码");
+        }else {
+            KeyPair keyPair = KeyPair.generateEd25519KeyPair();
+            PublicKey publicKey = keyPair.getPublicKey();
+            byte[] salt = new byte[saltLength];
+            byte[] iv = new byte[ivLength];
+            SecureRandom random = new SecureRandom();
+            random.nextBytes(iv);
+            SecureRandom sr = new SecureRandom();
+            sr.nextBytes(salt);
+            ArgonManage argon2id = new ArgonManage(ArgonManage.Type.ARGON2id, salt);
+            AESManage aes = new AESManage(iv);
 
-            String[] resString = res.split("");
-            byte[] check = new byte[res.length()];
-            for (int j=0;j<res.length();j++){
-                if(isInteger(resString[j])){
-                    check[j] = Byte.parseByte(resString[j]);
-                }else{
-                    check[j] = 0;
-                }
-            }
-            String bstr=Hex.encodeHexString(SHA3Utility.keccak256(check));
-            char[] b = bstr.toCharArray();
-            char[] a = res.toCharArray();
-            for(int i=0;i<a.length;i++)
-                if (Character.isDigit(a[i])) {
-                    address = address + a[i];
-                } else {
-                    if (Integer.parseInt(String.valueOf(a[i]), 16) - Integer.parseInt(String.valueOf(b[i]), 16) > 8) {
-                        address=address+String.valueOf(a[i]).toUpperCase();
-                    }else{
-                        address = address + a[i];
-                    }
-            }
-        }catch (Exception e){
-            e.printStackTrace();
+            byte[] derivedKey = argon2id.hash(password.getBytes());
+            byte[] cipherPrivKey = aes.encrypt(derivedKey, keyPair.getPrivateKey().getBytes());
+            byte[] mac = SHA3Utility.keccak256(Bytes.concat(
+                    derivedKey,cipherPrivKey
+                    )
+            );
+            String b= Hex.encodeHexString(iv);
+
+            Crypto crypto = new Crypto(
+                    AESManage.cipher, Hex.encodeHexString(cipherPrivKey),
+                    new Cipherparams(
+                            Hex.encodeHexString(iv)
+                    )
+            );
+            Kdfparams kdfparams = new Kdfparams(ArgonManage.memoryCost,ArgonManage.timeCost,ArgonManage.parallelism, Hex.encodeHexString(salt));
+
+            com.example.wdc.keystore.account.Address ads = new com.example.wdc.keystore.account.Address(publicKey);
+            ArgonManage params = new ArgonManage(salt);
+            Keystore ks = new Keystore(ads.getAddress(), crypto, Utils.generateUUID(),
+                    defaultVersion, Hex.encodeHexString(mac), argon2id.kdf(),kdfparams
+            );
+            return ks;
         }
-        return "WX" + address;
-   
     }
+
 }
