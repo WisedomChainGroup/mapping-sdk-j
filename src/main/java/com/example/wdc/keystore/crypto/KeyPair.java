@@ -30,8 +30,8 @@ public class KeyPair{
 
 		AsymmetricCipherKeyPair kp = kpg.generateKeyPair();
 		KeyPair nkp = new KeyPair();
-		Ed25519PrivateKeyParameters publicKey = (Ed25519PrivateKeyParameters)kp.getPrivate();
-		Ed25519PublicKeyParameters privateKey = (Ed25519PublicKeyParameters)kp.getPublic();
+		Ed25519PrivateKeyParameters privateKey = (Ed25519PrivateKeyParameters)kp.getPrivate();
+		Ed25519PublicKeyParameters publicKey = (Ed25519PublicKeyParameters)kp.getPublic();
 		nkp.publicKey = new PublicKey(publicKey.getEncoded());
 		nkp.privateKey = new PrivateKey(privateKey.getEncoded());
 		if (nkp.privateKey.isValid()){
