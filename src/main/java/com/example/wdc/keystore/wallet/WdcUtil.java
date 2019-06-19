@@ -1,14 +1,18 @@
 package com.example.wdc.keystore.wallet;
 
 import com.example.wdc.keystore.crypto.*;
+import com.example.wdc.keystore.crypto.ed25519.Ed25519PrivateKey;
+import com.example.wdc.keystore.crypto.ed25519.Ed25519PublicKey;
 import com.example.wdc.keystore.util.Base58Utility;
 import com.example.wdc.keystore.util.ByteUtil;
 import com.example.wdc.keystore.util.Utils;
 import com.google.common.primitives.Bytes;
 import com.google.gson.Gson;
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
 import java.security.SecureRandom;
+import java.util.Arrays;
 
 
 public class WdcUtil {
@@ -80,7 +84,7 @@ public class WdcUtil {
       6.r6就是地址
 
    */
-    public static String byteToAddress(byte[] pubkey){
+    public static String pubkeyHashToAddress(byte[] pubkey){
         byte[] pub256 = SHA3Utility.keccak256(pubkey);
         byte[] r1 = RipemdUtility.ripemd160(pub256);
         byte[] r2 = ByteUtil.prepend(r1,(byte)0x00);
@@ -98,11 +102,52 @@ public class WdcUtil {
      * @param address
      * @return
      */
-    public static byte[] addressToPubkey(String address){
+    public static byte[] addressToPubkeyHash(String address){
         byte[] r5 = Base58Utility.decode(address);
         byte[] r2 = ByteUtil.bytearraycopy(r5,0,21);
         byte[] r1 = ByteUtil.bytearraycopy(r2,1,20);
         return r1;
     }
 
+
+    public static byte[] decrypt(Keystore keystore,String password) throws Exception{
+        if (!WdcUtil.verifyPassword(keystore,password)){
+            throw new Exception("invalid password");
+        }
+        ArgonManage argon2id = new ArgonManage(ArgonManage.Type.ARGON2id, Hex.decodeHex(keystore.kdfparams.salt.toCharArray()));
+        byte[] derivedKey = argon2id.hash(password.getBytes());
+        byte[] iv = Hex.decodeHex(keystore.crypto.cipherparams.iv.toCharArray());
+        AESManage aes = new AESManage(iv);
+        return aes.decrypt(derivedKey, Hex.decodeHex(keystore.crypto.ciphertext.toCharArray()));
+    }
+
+    public static boolean verifyPassword(Keystore keystore,String password) throws Exception{
+        // 验证密码是否正确 计算 mac
+        ArgonManage argon2id = new ArgonManage(ArgonManage.Type.ARGON2id, Hex.decodeHex(keystore.kdfparams.salt.toCharArray()));
+        byte[] derivedKey = argon2id.hash(password.getBytes());
+        byte[] cipherPrivKey = Hex.decodeHex(keystore.crypto.ciphertext.toCharArray());
+        byte[] mac = SHA3Utility.keccak256(Bytes.concat(
+                derivedKey,cipherPrivKey
+                )
+        );
+        return Hex.encodeHexString(mac).equals(keystore.mac);
+    }
+
+    public static String prikeyToPubkey(String prikey) throws DecoderException {
+        Ed25519PrivateKey eprik = new Ed25519PrivateKey(Hex.decodeHex(prikey.toCharArray()));
+        Ed25519PublicKey epuk = eprik.generatePublicKey();
+        String pubkey = Hex.encodeHexString(epuk.getEncoded());
+        return pubkey;
+    }
+
+    public static String keystoreToPubkey(Keystore ks,String password) throws Exception {
+        String privateKey =  obtainPrikey(ks,password);
+        String pubkey = prikeyToPubkey(privateKey);
+        return pubkey;
+    }
+
+    public static String obtainPrikey(Keystore ks,String password) throws Exception {
+        String privateKey =  Hex.encodeHexString(WdcUtil.decrypt(ks,password));
+        return privateKey;
+    }
 }

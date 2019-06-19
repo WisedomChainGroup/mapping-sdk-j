@@ -29,4 +29,8 @@ public class CryptoException extends RuntimeException  {
     public CryptoException(final String message, final Throwable cause) {
         super(message, cause);
     }
+
+    public CryptoException() {
+
+    }
 }
