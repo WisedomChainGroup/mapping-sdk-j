@@ -1,18 +1,23 @@
 package com.example.wdc.keystore.wallet;
 
+import com.example.wdc.keystore.ApiResult.APIResult;
 import com.example.wdc.keystore.crypto.*;
 import com.example.wdc.keystore.crypto.ed25519.Ed25519PrivateKey;
 import com.example.wdc.keystore.crypto.ed25519.Ed25519PublicKey;
 import com.example.wdc.keystore.util.Base58Utility;
 import com.example.wdc.keystore.util.ByteUtil;
+import com.example.wdc.keystore.util.ByteUtils;
 import com.example.wdc.keystore.util.Utils;
 import com.google.common.primitives.Bytes;
 import com.google.gson.Gson;
-import org.apache.commons.codec.DecoderException;
+import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Hex;
 
+import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.Arrays;
+
+import static com.example.wdc.keystore.ApiResult.APIResult.newFailResult;
 
 
 public class WdcUtil {
@@ -21,6 +26,8 @@ public class WdcUtil {
     private static final int saltLength = 32;
     private static final int ivLength = 16;
     private static final String defaultVersion = "1";
+    private static final String t = "1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ec";
+
 
 
     public static Keystore unmarshal(String in) throws com.google.gson.JsonSyntaxException {
@@ -33,7 +40,7 @@ public class WdcUtil {
     }
     public static Keystore fromPassword(String password) throws Exception{
         if (password.length()>20 || password.length()<8){
-            throw new Exception("请输入8-20位密码");
+            throw new Exception("invalid password");
         }else {
             KeyPair keyPair = KeyPair.generateEd25519KeyPair();
             PublicKey publicKey = keyPair.getPublicKey();
@@ -71,6 +78,19 @@ public class WdcUtil {
         }
     }
 
+    public static byte[] hexToByte(String hex){
+        int m = 0, n = 0;
+        int byteLen = hex.length() / 2; // 每两个字符描述一个字节
+        byte[] ret = new byte[byteLen];
+        for (int i = 0; i < byteLen; i++) {
+            m = i * 2 + 1;
+            n = m + 1;
+            int intVal = Integer.decode("0x" + hex.substring(i * 2, m) + hex.substring(m, n));
+            ret[i] = Byte.valueOf((byte)intVal);
+        }
+        return ret;
+    }
+
     /*
         地址生成逻辑
        1.对公钥进行SHA3-256哈希，再进行RIPEMD-160哈希，
@@ -85,9 +105,11 @@ public class WdcUtil {
 
    */
     public static String pubkeyHashToAddress(byte[] pubkey){
+        byte[] addressPrefix = {0x49};
         byte[] pub256 = SHA3Utility.keccak256(pubkey);
         byte[] r1 = RipemdUtility.ripemd160(pub256);
-        byte[] r2 = ByteUtil.prepend(r1,(byte)0x00);
+        byte[] r2 = ByteUtil.byteMerger(addressPrefix,r1);
+        System.out.println(Hex.encodeHexString(r2));
         byte[] r3 = SHA3Utility.keccak256(SHA3Utility.keccak256(r1));
         byte[] b4 = ByteUtil.bytearraycopy(r3,0,4);
         byte[] b5 = ByteUtil.byteMerger(r2,b4);
@@ -133,7 +155,10 @@ public class WdcUtil {
         return Hex.encodeHexString(mac).equals(keystore.mac);
     }
 
-    public static String prikeyToPubkey(String prikey) throws DecoderException {
+    public static String prikeyToPubkey(String prikey) throws Exception {
+        if(prikey.length() != 64 || new BigInteger(Hex.decodeHex(prikey.toCharArray())).compareTo(new BigInteger(ByteUtils.hexStringToBytes(t))) > 0){
+            throw new Exception("Private key format error");
+        }
         Ed25519PrivateKey eprik = new Ed25519PrivateKey(Hex.decodeHex(prikey.toCharArray()));
         Ed25519PublicKey epuk = eprik.generatePublicKey();
         String pubkey = Hex.encodeHexString(epuk.getEncoded());
@@ -145,7 +170,33 @@ public class WdcUtil {
         String pubkey = prikeyToPubkey(privateKey);
         return pubkey;
     }
-
+    /**
+     * 地址有效性校验
+     * @param address
+     * @return
+     */
+    public static String verifyAddress(String address){
+        byte[] r5 = Base58Utility.decode(address);
+//        ResultSupport ar = new ResultSupport();
+        if(!address.startsWith("W")){
+//            jr.setStatusCode(-1);
+            APIResult as =  newFailResult(-1,"地址开头字母有误");
+            String str = String.valueOf(JSONObject.fromObject(as));
+            return str;
+        }
+        byte[] r3 = SHA3Utility.keccak256(SHA3Utility.keccak256(addressToPubkeyHash(address)));
+        byte[] b4 = ByteUtil.bytearraycopy(r3,0,4);
+        byte[] _b4 = ByteUtil.bytearraycopy(r5,r5.length-4,4);
+        if(Arrays.equals(b4,_b4)){
+            APIResult as =  newFailResult(0,"正确");
+            String str = String.valueOf(JSONObject.fromObject(as));
+            return str;
+        }else {
+            APIResult as =  newFailResult(-2,"地址格式错误");
+            String str = String.valueOf(JSONObject.fromObject(as));
+            return  str;
+        }
+    }
     public static String obtainPrikey(Keystore ks,String password) throws Exception {
         String privateKey =  Hex.encodeHexString(WdcUtil.decrypt(ks,password));
         return privateKey;
