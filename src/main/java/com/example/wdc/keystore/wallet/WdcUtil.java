@@ -78,19 +78,6 @@ public class WdcUtil {
         }
     }
 
-    public static byte[] hexToByte(String hex){
-        int m = 0, n = 0;
-        int byteLen = hex.length() / 2; // 每两个字符描述一个字节
-        byte[] ret = new byte[byteLen];
-        for (int i = 0; i < byteLen; i++) {
-            m = i * 2 + 1;
-            n = m + 1;
-            int intVal = Integer.decode("0x" + hex.substring(i * 2, m) + hex.substring(m, n));
-            ret[i] = Byte.valueOf((byte)intVal);
-        }
-        return ret;
-    }
-
     /*
         地址生成逻辑
        1.对公钥进行SHA3-256哈希，再进行RIPEMD-160哈希，
@@ -105,11 +92,9 @@ public class WdcUtil {
 
    */
     public static String pubkeyHashToAddress(byte[] pubkey){
-        byte[] addressPrefix = {0x49};
         byte[] pub256 = SHA3Utility.keccak256(pubkey);
         byte[] r1 = RipemdUtility.ripemd160(pub256);
-        byte[] r2 = ByteUtil.byteMerger(addressPrefix,r1);
-        System.out.println(Hex.encodeHexString(r2));
+        byte[] r2 = ByteUtil.prepend(r1,(byte)0x00);
         byte[] r3 = SHA3Utility.keccak256(SHA3Utility.keccak256(r1));
         byte[] b4 = ByteUtil.bytearraycopy(r3,0,4);
         byte[] b5 = ByteUtil.byteMerger(r2,b4);
@@ -178,7 +163,7 @@ public class WdcUtil {
     public static String verifyAddress(String address){
         byte[] r5 = Base58Utility.decode(address);
 //        ResultSupport ar = new ResultSupport();
-        if(!address.startsWith("W")){
+        if(!address.startsWith("1")){
 //            jr.setStatusCode(-1);
             APIResult as =  newFailResult(-1,"地址开头字母有误");
             String str = String.valueOf(JSONObject.fromObject(as));
