@@ -11,13 +11,16 @@ import com.example.wdc.keystore.util.Utils;
 import com.google.common.primitives.Bytes;
 import com.google.gson.Gson;
 import net.sf.json.JSONObject;
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
 import java.math.BigInteger;
+import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
 import static com.example.wdc.keystore.ApiResult.APIResult.newFailResult;
+import static com.example.wdc.keystore.ApiResult.APIResult.newSuccessResult;
 
 
 public class WdcUtil {
@@ -38,7 +41,7 @@ public class WdcUtil {
         Gson gson = new Gson();
         return gson.toJson(keystore);
     }
-    public static Keystore fromPassword(String password) throws Exception{
+    public static String fromPassword(String password) throws Exception{
         if (password.length()>20 || password.length()<8){
             throw new Exception("invalid password");
         }else {
@@ -74,7 +77,9 @@ public class WdcUtil {
             Keystore ks = new Keystore(ads.getAddress(), crypto, Utils.generateUUID(),
                     defaultVersion, Hex.encodeHexString(mac), argon2id.kdf(),kdfparams
             );
-            return ks;
+            APIResult as =  newSuccessResult(ks);
+            String json = String.valueOf(JSONObject.fromObject(as));
+            return  json;
         }
     }
 
@@ -91,15 +96,16 @@ public class WdcUtil {
       6.r6就是地址
 
    */
-    public static String pubkeyHashToAddress(byte[] pubkey){
-        byte[] pub256 = SHA3Utility.keccak256(pubkey);
-        byte[] r1 = RipemdUtility.ripemd160(pub256);
+    public static String pubkeyHashToAddress(String r1Str) throws DecoderException {
+        byte[] r1 = Hex.decodeHex(r1Str.toCharArray());
         byte[] r2 = ByteUtil.prepend(r1,(byte)0x00);
         byte[] r3 = SHA3Utility.keccak256(SHA3Utility.keccak256(r1));
         byte[] b4 = ByteUtil.bytearraycopy(r3,0,4);
         byte[] b5 = ByteUtil.byteMerger(r2,b4);
         String s6 = Base58Utility.encode(b5);
-        return s6 ;
+        APIResult ar =  newFailResult(0,s6);
+        String json = String.valueOf(JSONObject.fromObject(ar));
+        return  json;
     }
 
     /**
@@ -109,11 +115,14 @@ public class WdcUtil {
      * @param address
      * @return
      */
-    public static byte[] addressToPubkeyHash(String address){
+    public static String addressToPubkeyHash(String address){
         byte[] r5 = Base58Utility.decode(address);
         byte[] r2 = ByteUtil.bytearraycopy(r5,0,21);
         byte[] r1 = ByteUtil.bytearraycopy(r2,1,20);
-        return r1;
+        String publickeyHash =  Hex.encodeHexString(r1);
+        APIResult ar =  newFailResult(0,publickeyHash);
+        String json = String.valueOf(JSONObject.fromObject(ar));
+        return  json;
     }
 
 
@@ -147,20 +156,24 @@ public class WdcUtil {
         Ed25519PrivateKey eprik = new Ed25519PrivateKey(Hex.decodeHex(prikey.toCharArray()));
         Ed25519PublicKey epuk = eprik.generatePublicKey();
         String pubkey = Hex.encodeHexString(epuk.getEncoded());
-        return pubkey;
+        APIResult ar =  newFailResult(0,pubkey);
+        String json = String.valueOf(JSONObject.fromObject(ar));
+        return  json;
     }
 
     public static String keystoreToPubkey(Keystore ks,String password) throws Exception {
         String privateKey =  obtainPrikey(ks,password);
         String pubkey = prikeyToPubkey(privateKey);
-        return pubkey;
+        APIResult ar =  newFailResult(0,pubkey);
+        String json = String.valueOf(JSONObject.fromObject(ar));
+        return  json;
     }
     /**
      * 地址有效性校验
      * @param address
      * @return
      */
-    public static String verifyAddress(String address){
+    public static String verifyAddress(String address) throws DecoderException {
         byte[] r5 = Base58Utility.decode(address);
 //        ResultSupport ar = new ResultSupport();
         if(!address.startsWith("1")){
@@ -169,7 +182,7 @@ public class WdcUtil {
             String str = String.valueOf(JSONObject.fromObject(as));
             return str;
         }
-        byte[] r3 = SHA3Utility.keccak256(SHA3Utility.keccak256(addressToPubkeyHash(address)));
+        byte[] r3 = SHA3Utility.keccak256(SHA3Utility.keccak256(atph(address)));
         byte[] b4 = ByteUtil.bytearraycopy(r3,0,4);
         byte[] _b4 = ByteUtil.bytearraycopy(r5,r5.length-4,4);
         if(Arrays.equals(b4,_b4)){
@@ -184,6 +197,27 @@ public class WdcUtil {
     }
     public static String obtainPrikey(Keystore ks,String password) throws Exception {
         String privateKey =  Hex.encodeHexString(WdcUtil.decrypt(ks,password));
-        return privateKey;
+        APIResult ar =  newFailResult(0,privateKey);
+        String json = String.valueOf(JSONObject.fromObject(ar));
+        return  json;
     }
+
+    public static String phta(byte[] pubkey){
+        byte[] pub256 = SHA3Utility.keccak256(pubkey);
+        byte[] r1 = RipemdUtility.ripemd160(pub256);
+        byte[] r2 = ByteUtil.prepend(r1,(byte)0x00);
+        byte[] r3 = SHA3Utility.keccak256(SHA3Utility.keccak256(r1));
+        byte[] b4 = ByteUtil.bytearraycopy(r3,0,4);
+        byte[] b5 = ByteUtil.byteMerger(r2,b4);
+        String s6 = Base58Utility.encode(b5);
+        return  s6;
+    }
+
+    public static byte[] atph(String address){
+        byte[] r5 = Base58Utility.decode(address);
+        byte[] r2 = ByteUtil.bytearraycopy(r5,0,21);
+        byte[] r1 = ByteUtil.bytearraycopy(r2,1,20);
+        return  r1;
+    }
+
 }

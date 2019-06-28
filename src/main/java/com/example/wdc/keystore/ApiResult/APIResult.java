@@ -3,15 +3,15 @@ package com.example.wdc.keystore.ApiResult;
 import net.sf.json.JSONObject;
 
 public class APIResult<T> extends ResultSupport {
-//    protected T data;
-//
-//    public T getData() {
-//        return data;
-//    }
-//
-//    public void setData(T data) {
-//        this.data = data;
-//    }
+    protected T data;
+
+    public T getData() {
+        return data;
+    }
+
+    public void setData(T data) {
+        this.data = data;
+    }
 
     /**
      * 接口调用失败,有错误字符串码和描述,有返回对象
@@ -25,6 +25,7 @@ public class APIResult<T> extends ResultSupport {
         APIResult<U> apiResult = new APIResult<U>();
         apiResult.setStatusCode(code);
         apiResult.setMessage(message);
+        apiResult.setData(data);
         return apiResult;
     }
 
@@ -42,9 +43,9 @@ public class APIResult<T> extends ResultSupport {
         return apiResult;
     }
 
-
     public static <U> APIResult<U> newSuccessResult(U data){
         APIResult<U> apiResult = new APIResult<U>();
+        apiResult.setData(data);
         return apiResult;
     }
 }
